@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Profile – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='profile'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Profile</h1><p class="page-sub">Your account information</p></div>
+    </div>
+    <div class="card" style="max-width:680px">
+      <div class="prof-wrap">
+        <div class="avatar" th:text="${#strings.substring(student.fullName,0,1)}">A</div>
+        <div class="prof-name" th:text="${student.fullName}">Name</div>
+        <div style="text-align:center;margin-top:.4rem"><span class="badge b-student">Student</span></div>
+        <div class="prof-grid">
+          <div class="prof-item"><span class="mlbl">Student ID</span><span th:text="${student.studentId ?: '—'}">STU001</span></div>
+          <div class="prof-item"><span class="mlbl">Username</span><code th:text="${student.username}">user</code></div>
+          <div class="prof-item"><span class="mlbl">Email</span><span th:text="${student.email}">email</span></div>
+          <div class="prof-item"><span class="mlbl">Class</span><span th:text="${student.schoolClass != null ? student.schoolClass.name : '—'}">Class</span></div>
+          <div class="prof-item"><span class="mlbl">Parent / Guardian</span><span th:text="${student.parentName ?: '—'}">Parent</span></div>
+          <div class="prof-item"><span class="mlbl">Parent Phone</span><span th:text="${student.parentPhone ?: '—'}">Phone</span></div>
+          <div class="prof-item"><span class="mlbl">Account Status</span><span th:class="${'badge b-' + student.approvalStatus.name().toLowerCase()}" th:text="${student.approvalStatus}">APPROVED</span></div>
+          <div class="prof-item"><span class="mlbl">Member Since</span><span th:text="${student.createdAt}">Date</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Grades – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+  <style>
+    .stats-grid .stat-card .si .nav-icon {
+      width: 1.8rem;
+      height: 1.8rem;
+      fill: currentColor;
+      margin-bottom: 0.4rem;
+    }
+  </style>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='grades'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Grades</h1><p class="page-sub">Your performance overview</p></div>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:1.5rem">
+      <div class="stat-card sc-purple">
+        <div class="si">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        </div>
+        <div class="sv" th:text="${avgScore != null ? #numbers.formatDecimal(avgScore,1,1) : '—'}">—</div>
+        <div class="sl">Average Score</div>
+      </div>
+      
+      <div class="stat-card sc-green">
+        <div class="si">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+        </div>
+        <div class="sv" th:text="${#lists.size(submissions)}">0</div>
+        <div class="sl">Total Submissions</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Assignment</th><th>Subject</th><th>Submitted</th><th>Status</th><th>Score</th><th>Feedback</th></tr></thead>
+          <tbody>
+            <tr th:each="s : ${submissions}">
+              <td th:text="${s.task.title}">Assignment</td>
+              <td th:text="${s.task.subject ?: '—'}">Subj</td>
+              <td th:text="${s.submittedAt}">Date</td>
+              <td><span th:class="${'badge b-' + s.status.name().toLowerCase()}" th:text="${s.status}">GRADED</span></td>
+              <td>
+                <span th:if="${s.score != null}">
+                  <strong th:text="${s.score}">90</strong> / <span th:text="${s.task.maxScore ?: '?'}">100</span>
+                </span>
+                <span th:if="${s.score == null}" class="muted">Pending</span>
+              </td>
+              <td style="max-width:200px;font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+                  th:text="${s.teacherFeedback ?: '—'}">Feedback</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(submissions)}"><td colspan="6" class="erow">No submissions yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

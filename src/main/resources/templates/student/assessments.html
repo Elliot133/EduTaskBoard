@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Assessments – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='assessments'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Assessments</h1><p class="page-sub">CA1, CA2 and Exams for your class</p></div>
+    </div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Title</th><th>Type</th><th>Subject</th><th>Opens</th><th>Closes</th><th>Duration</th><th></th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${assessments}">
+              <td th:text="${a.title}">Title</td>
+              <td th:text="${a.type}">CA1</td>
+              <td th:text="${a.subject.name}">Subject</td>
+              <td th:text="${a.openDate} + ' ' + ${a.openTime}">Open</td>
+              <td th:text="${a.closeDate} + ' ' + ${a.closeTime}">Close</td>
+              <td th:text="${a.durationMinutes} + ' min'">60 min</td>
+              <td><a th:href="@{/student/assessments/{id}(id=${a.id})}" class="btn btn-sm btn-primary">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(assessments)}"><td colspan="7" class="erow">No assessments available yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

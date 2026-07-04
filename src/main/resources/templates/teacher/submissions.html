@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Submissions – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='tasks'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Submissions</h1><p class="page-sub" th:text="${task != null ? task.title : ''}">Assignment</p></div>
+      <a th:href="@{/teacher/tasks}" class="btn btn-outline">← Back</a>
+    </div>
+
+    <div th:if="${task != null}" class="card mb-6" style="padding:1.2rem 1.4rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;font-size:.875rem">
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Subject</span><span th:text="${task.subject ?: '—'}">Subj</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Due Date</span><span th:text="${task.dueDate}">Date</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Max Score</span><span th:text="${task.maxScore ?: '—'}">100</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Submissions</span><span th:text="${#lists.size(submissions)}">0</span></div>
+      </div>
+    </div>
+
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Score</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr th:each="s : ${submissions}">
+              <td th:text="${s.student.fullName}">Name</td>
+              <td th:text="${s.submittedAt}">Date</td>
+              <td><span th:class="${'badge b-' + s.status.name().toLowerCase()}" th:text="${s.status}">SUB</span></td>
+              <td>
+                <span th:if="${s.score != null}" th:text="${s.score + '/' + (task.maxScore ?: '?')}">90/100</span>
+                <span th:if="${s.score == null}" class="muted">Not graded</span>
+              </td>
+              <td>
+                <a th:href="@{/teacher/submissions/{id}/grade(id=${s.id})}" class="btn btn-sm btn-primary"
+                   th:text="${s.score == null ? 'Grade' : 'Re-grade'}">Grade</a>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(submissions)}"><td colspan="5" class="erow">No submissions yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

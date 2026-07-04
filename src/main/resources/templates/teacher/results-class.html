@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Class Report Cards – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='results'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title" th:text="${schoolClass.name} + ' — Report Cards'">Report Cards</h1>
+        <p class="page-sub">Available once every subject's results are complete for this class</p></div>
+      <a th:href="@{/teacher/results}" class="btn btn-outline">← Back</a>
+    </div>
+
+    <div class="card" th:if="${#lists.isEmpty(reportCards)}">
+      <div class="empty-st">Report cards will appear here once every subject taught in this class has finished CA1, CA2 and Exam marking.</div>
+    </div>
+
+    <div th:each="rc : ${reportCards}" class="card mb-6" style="padding:1.2rem 1.4rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem">
+        <div>
+          <div style="font-weight:700" th:text="${rc.student.fullName}">Student</div>
+          <div class="muted" style="font-size:.8rem">
+            Total: <b th:text="${rc.overallTotal}">0</b> · Average: <b th:text="${rc.overallAverage}">0</b> ·
+            Subjects: <b th:text="${rc.numberOfSubjects}">0</b> · Attendance: <b th:text="${rc.attendancePercent} + '%'">0%</b>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div th:class="'grade-' + ${rc.overallGrade}" style="font-size:1.4rem" th:text="${rc.overallGrade}">A</div>
+          <div class="muted" style="font-size:.75rem">Position #<span th:text="${rc.overallPosition}">1</span></div>
+        </div>
+      </div>
+      <form action="/teacher/results/class/remark" method="post" style="margin-top:.8rem;display:flex;gap:.5rem">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <input type="hidden" name="reportCardId" th:value="${rc.id}"/>
+        <input type="text" name="remark" class="fi" th:value="${rc.classTeacherRemark}" placeholder="Class teacher remark…" style="flex:1"/>
+        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+      </form>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

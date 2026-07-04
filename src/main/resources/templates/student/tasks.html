@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Tasks – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='tasks'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Assignment</h1><p class="page-sub">All assignments for your class</p></div>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+
+    <div class="task-grid">
+      <div th:each="t : ${tasks}" class="task-card">
+        <div class="tc-top">
+          <span th:class="${'badge b-' + t.priority.name().toLowerCase()}" th:text="${t.priority}">HIGH</span>
+          <span th:class="${'badge b-' + t.status.name().toLowerCase()}" th:text="${t.status}">ACTIVE</span>
+          <span th:if="${submittedIds.contains(t.id)}" class="badge b-submitted">✓ Submitted</span>
+        </div>
+        <div class="tc-title" th:text="${t.title}">Title</div>
+        <div class="tc-desc" th:text="${#strings.abbreviate(t.description ?: '',100)}">Desc</div>
+        <div class="tc-meta">
+          <span>📚 <span th:text="${t.subject ?: '—'}">Subj</span></span>
+          <span>📅 Due: <strong th:text="${t.dueDate}">Date</strong></span>
+          <span>🏆 Max: <span th:text="${t.maxScore ?: '?'}">100</span></span>
+        </div>
+        <div class="tc-foot">
+          <a th:href="@{/student/tasks/{id}(id=${t.id})}" class="btn btn-primary btn-full">
+            <span th:text="${submittedIds.contains(t.id) ? 'View Submission' : 'Open &amp; Submit'}">Open</span>
+          </a>
+        </div>
+      </div>
+      <div th:if="${#lists.isEmpty(tasks)}" style="grid-column:1/-1">
+        <div class="empty-st"><span class="empty-ic">🎉</span>No assignment assigned yet!</div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

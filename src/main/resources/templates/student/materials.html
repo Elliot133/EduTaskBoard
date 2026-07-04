@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Learning Materials – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='materials'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Learning Materials</h1><p class="page-sub">Notes, slides, and documents from your teachers</p></div>
+    </div>
+
+    <div class="card">
+      <div class="cls-list">
+        <div th:each="m : ${materials}" class="cls-item">
+          <div>
+            <div class="cls-name" th:text="${m.title}">Title</div>
+            <div class="cls-meta">
+              <span th:text="${m.fileType}">PDF</span> ·
+              <span th:text="${m.subject != null ? m.subject.name : 'General'}">Subject</span> ·
+              by <span th:text="${m.teacher.fullName}">Teacher</span>
+            </div>
+          </div>
+          <a th:href="@{/materials/{id}/download(id=${m.id})}" class="btn btn-sm btn-primary">Download</a>
+        </div>
+        <div th:if="${#lists.isEmpty(materials)}" class="empty-st">No materials available yet.</div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

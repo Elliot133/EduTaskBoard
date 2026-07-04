@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Result – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='assessments'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title" th:text="${attempt.assessment.title}">Assessment</h1><p class="page-sub">Your submission</p></div>
+      <a th:href="@{/student/assessments}" class="btn btn-outline">← Back</a>
+    </div>
+
+    <div class="card mb-6" style="padding:1.2rem 1.4rem">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;font-size:.9rem">
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Objective Score</span><span th:text="${attempt.objectiveScore}">0</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Theory Score</span>
+          <span th:text="${attempt.fullyMarked ? attempt.theoryScore : 'Pending'}">Pending</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Total</span>
+          <span th:text="${attempt.fullyMarked ? attempt.totalScore : 'Pending marking'}">Pending</span></div>
+      </div>
+      <p class="muted" style="margin-top:.75rem;font-size:.85rem" th:text="'Submitted: ' + ${attempt.submittedAt}">Submitted</p>
+    </div>
+
+    <div th:each="ans,st : ${answers}" class="card mb-6" style="padding:1.2rem 1.4rem">
+      <div class="cls-meta" style="margin-bottom:.4rem">Q<span th:text="${st.count}"></span> · <span th:text="${ans.question.marks}">0</span> marks allotted</div>
+      <div style="font-weight:600;margin-bottom:.6rem" th:text="${ans.question.questionText}">Question</div>
+      <div th:if="${ans.question.type.name() == 'OBJECTIVE'}">
+        <p class="muted">Your answer: <strong th:text="${ans.selectedOption ?: 'No answer'}">A</strong> ·
+           Score: <strong th:text="${ans.marksAwarded} + '/' + ${ans.question.marks}">0/2</strong></p>
+      </div>
+      <div th:if="${ans.question.type.name() == 'THEORY'}">
+        <div style="background:var(--bg-2,#f6f7f9);padding:.75rem;border-radius:.5rem;white-space:pre-wrap;margin-bottom:.5rem" th:text="${ans.answerText ?: 'No answer submitted'}">Answer</div>
+        <p class="muted">Score: <strong th:text="${ans.marked ? (ans.marksAwarded + '/' + ans.question.marks) : 'Pending marking'}">Pending</strong></p>
+        <p th:if="${ans.teacherComment}" class="muted">Comment: <span th:text="${ans.teacherComment}"></span></p>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

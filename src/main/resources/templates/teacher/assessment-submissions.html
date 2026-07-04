@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Submissions – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='assessments'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title" th:text="${assessment.title}">Assessment</h1><p class="page-sub">Student submissions and marking status</p></div>
+      <a th:href="@{/teacher/assessments}" class="btn btn-outline">← Back</a>
+    </div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Student</th><th>Status</th><th>Submitted</th><th>Objective</th><th>Theory</th><th>Total</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${attempts}">
+              <td th:text="${a.student.fullName}">Name</td>
+              <td>
+                <span th:class="${'badge ' + (a.status.name() == 'IN_PROGRESS' ? 'b-pending' : (a.fullyMarked ? 'b-active' : 'b-late'))}"
+                      th:text="${a.status.name() == 'IN_PROGRESS' ? 'In Progress' : (a.fullyMarked ? 'Marked' : 'Pending Marking')}">Status</span>
+              </td>
+              <td th:text="${a.submittedAt ?: '—'}">Date</td>
+              <td th:text="${a.objectiveScore}">0</td>
+              <td th:text="${a.theoryScore ?: '—'}">0</td>
+              <td th:text="${a.totalScore ?: '—'}">0</td>
+              <td>
+                <a th:if="${a.status.name() != 'IN_PROGRESS'}" th:href="@{/teacher/assessments/attempts/{id}/mark(id=${a.id})}" class="btn btn-sm btn-primary">Mark</a>
+                <span th:if="${a.status.name() == 'IN_PROGRESS'}" class="muted">Not submitted</span>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(attempts)}"><td colspan="7" class="erow">No submissions yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Assessments – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='assessments'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">All Assessments</h1><p class="page-sub">School-wide CBT overview</p></div>
+    </div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Title</th><th>Type</th><th>Subject</th><th>Class</th><th>Teacher</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${assessments}">
+              <td th:text="${a.title}">Title</td>
+              <td th:text="${a.type}">CA1</td>
+              <td th:text="${a.subject.name}">Subject</td>
+              <td th:text="${a.schoolClass.name}">Class</td>
+              <td th:text="${a.teacher.fullName}">Teacher</td>
+              <td>
+                <span th:if="${a.published}" class="badge b-active">Published</span>
+                <span th:unless="${a.published}" class="badge b-pending">Draft</span>
+                <span th:if="${a.approved}" class="badge b-submitted">Approved</span>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(assessments)}"><td colspan="6" class="erow">No assessments yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

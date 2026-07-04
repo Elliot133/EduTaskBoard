@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Teacher Dashboard – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+  
+  <style>
+    /* Teacher dashboard SVG sizing only - mobile handled globally now */
+    .stats-grid .stat-card .si .nav-icon {
+      width: 1.8rem;
+      height: 1.8rem;
+      fill: currentColor;
+      margin-bottom: 0.4rem;
+    }
+    .tli-meta .nav-icon {
+      width: 0.85rem;
+      height: 0.85rem;
+      fill: currentColor;
+      margin-right: 0.25rem;
+      vertical-align: middle;
+    }
+    .ann-head .nav-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+      fill: currentColor;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+    }
+    .empty-st .nav-icon {
+      width: 1.2rem;
+      height: 1.2rem;
+      fill: currentColor;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+    .btn-primary .nav-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+      fill: currentColor;
+      margin-right: 0.3rem;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='dashboard'"></div>
+  
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Welcome, <span th:text="${teacher.fullName}">Teacher</span>!</h1>
+        <p class="page-sub" th:text="${(teacher.subject ?: 'School') + ' Department'}">Department</p>
+      </div>
+      <a th:href="@{/teacher/tasks/new}" class="btn btn-primary">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Assignment Task
+      </a>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card sc-green"> 
+        <div class="si">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </div>
+        <div class="sv" th:text="${taskCount}">0</div>
+        <div class="sl">My Assignment</div>
+      </div>
+      
+      <div class="stat-card sc-blue">  
+        <div class="si">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 3L4 9v12h16V9l-8-6zm-1 16H7v-6h4v6zm5 0h-4v-6h4v6z"/></svg>
+        </div>
+        <div class="sv" th:text="${#lists.size(myClasses)}">0</div>
+        <div class="sl">My Classes</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">My Assignment</h2>
+          <a th:href="@{/teacher/tasks}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        <div>
+          <div th:each="t, tStat : ${myTasks}" th:if="${tStat.index < 6}" class="tli">
+            <div class="tli-head">
+              <span class="tli-title" th:text="${t.title}">Assignment</span>
+              <span th:class="${'badge b-' + t.priority.name().toLowerCase()}" th:text="${t.priority}">HIGH</span>
+            </div>
+            <div class="tli-meta">
+              <span>
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+                <span th:text="${t.dueDate}">date</span>
+              </span>
+              <span>
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                <span th:text="${t.subject ?: '—'}">subj</span>
+              </span>
+              <a th:href="@{/teacher/tasks/{id}/submissions(id=${t.id})}" style="color:var(--emerald);font-weight:600">
+                View submissions
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </a>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(myTasks)}" class="empty-st">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            No Assignment yet. <a th:href="@{/teacher/tasks/new}" style="color:var(--emerald)">Create one →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Announcements</h2></div>
+        <div class="ann-list">
+          <div th:each="a, aStat : ${announcements}" th:if="${aStat.index < 5}" class="ann-item">
+            <div class="ann-head">
+              <span class="ann-title" th:text="${a.title}">Title</span>
+              <span th:if="${a.pinned}">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 9h4.5l-4-4V9zM9 2v2H7v2h2v12c0 1.1.9 2 2 2h8v-2h-8V6h5l4-4H9z"/></svg>
+              </span>
+            </div>
+            <p class="ann-body" th:text="${#strings.abbreviate(a.content,110)}">Content</p>
+          </div>
+          <div th:if="${#lists.isEmpty(announcements)}" class="empty-st">No announcements.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

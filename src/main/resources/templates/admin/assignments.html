@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Teacher Assignments – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='assignments'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Teacher Assignments</h1><p class="page-sub">Assign teachers to subjects, classes, and class-teacher roles</p></div>
+      <a th:href="@{/admin/subjects}" class="btn btn-outline">← Subjects</a>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert a-error">⚠ <span th:text="${error}"></span></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Assign Subject Teacher</h2></div>
+        <div class="fw">
+          <form action="/admin/assignments/save" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="fg">
+              <label class="fl">Teacher *</label>
+              <select name="teacherId" class="fi" required>
+                <option value="">— Select Teacher —</option>
+                <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}">Teacher</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Subject *</label>
+              <select name="subjectId" class="fi" required>
+                <option value="">— Select Subject —</option>
+                <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}">Subject</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Class *</label>
+              <select name="classId" class="fi" required>
+                <option value="">— Select Class —</option>
+                <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name}">Class</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Assign</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Assign Class Teacher</h2></div>
+        <div class="fw">
+          <form action="/admin/assignments/class-teacher" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="fg">
+              <label class="fl">Class *</label>
+              <select name="classId" class="fi" required>
+                <option value="">— Select Class —</option>
+                <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name + (c.classTeacher != null ? ' (current: ' + c.classTeacher.fullName + ')' : '')}">Class</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Class Teacher *</label>
+              <select name="teacherId" class="fi" required>
+                <option value="">— Select Teacher —</option>
+                <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}">Teacher</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Set Class Teacher</button>
+          </form>
+          <p class="muted" style="margin-top:.75rem;font-size:.8rem">Each class has exactly one Class Teacher. Setting a new one replaces the current class teacher. A class teacher may also be a subject teacher.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-6" style="margin-top:1.5rem">
+      <div class="card-header">
+        <h2 class="card-title">All Subject/Class Assignments</h2>
+        <span class="badge b-count" th:text="${#lists.size(assignments)}">0</span>
+      </div>
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Teacher</th><th>Subject</th><th>Class</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${assignments}">
+              <td th:text="${a.teacher.fullName}">Teacher</td>
+              <td th:text="${a.subject.name}">Subject</td>
+              <td th:text="${a.schoolClass.name}">Class</td>
+              <td>
+                <form th:action="@{/admin/assignments/{id}/delete(id=${a.id})}" method="post" onsubmit="return confirm('Remove this assignment?')">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                  <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                </form>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(assignments)}"><td colspan="4" class="erow">No assignments yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

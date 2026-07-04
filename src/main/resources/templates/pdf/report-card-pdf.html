@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4; margin: 24px; }
+  body { font-family: Helvetica, Arial, sans-serif; color:#1e293b; font-size: 11px; }
+  .header { text-align:center; border-bottom: 3px solid #0ea5e9; padding-bottom: 10px; margin-bottom: 14px; }
+  .header h1 { margin:0; font-size: 20px; color:#0f172a; }
+  .header p { margin:2px 0 0; color:#64748b; font-size:11px; }
+  .meta-table { width:100%; margin-bottom: 14px; border-collapse: collapse; }
+  .meta-table td { padding: 3px 6px; font-size: 11px; }
+  .meta-table .label { color:#64748b; width: 110px; }
+  table.subjects { width:100%; border-collapse: collapse; margin-bottom: 14px; }
+  table.subjects th { background:#0ea5e9; color:#fff; padding:6px; font-size:10px; text-align:left; }
+  table.subjects td { border:1px solid #cbd5e1; padding:6px; font-size:10.5px; }
+  table.subjects tr:nth-child(even) { background:#f1f5f9; }
+  .grade-A { color:#059669; font-weight:bold; }
+  .grade-B { color:#0ea5e9; font-weight:bold; }
+  .grade-C { color:#f59e0b; font-weight:bold; }
+  .grade-D { color:#f43f5e; font-weight:bold; }
+  .summary { width:100%; border-collapse: collapse; margin-top: 6px; }
+  .summary td { padding:5px 8px; border:1px solid #cbd5e1; font-size:11px; }
+  .summary .label { background:#f1f5f9; font-weight:bold; width:35%; }
+  .remarks { margin-top:16px; }
+  .remark-box { border:1px solid #cbd5e1; border-radius:4px; padding:8px; margin-bottom:10px; }
+  .remark-box .title { font-weight:bold; font-size:10.5px; color:#0f172a; margin-bottom:4px; }
+  .footer { margin-top: 24px; font-size: 9px; color:#94a3b8; text-align:center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>EduTaskBoard School</h1>
+    <p>Student Report Card</p>
+  </div>
+
+  <table class="meta-table">
+    <tr>
+      <td class="label">Student Name:</td><td th:text="${student.fullName}">Name</td>
+      <td class="label">Class:</td><td th:text="${schoolClass.name}">Class</td>
+    </tr>
+    <tr>
+      <td class="label">Attendance:</td>
+      <td th:text="${reportCard != null ? reportCard.attendancePercent + '%' : '—'}">%</td>
+      <td class="label">Generated:</td>
+      <td th:text="${reportCard != null ? reportCard.generatedAt : '—'}">Date</td>
+    </tr>
+  </table>
+
+  <table class="subjects">
+    <thead>
+      <tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Highest</th><th>Grade</th><th>Teacher Remark</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="r : ${results}">
+        <td th:text="${r.subject.name}">Subject</td>
+        <td th:text="${r.ca1}">0</td>
+        <td th:text="${r.ca2}">0</td>
+        <td th:text="${r.exam}">0</td>
+        <td th:text="${r.total}">0</td>
+        <td th:text="${r.highest}">0</td>
+        <td th:class="'grade-' + ${r.grade}" th:text="${r.grade}">A</td>
+        <td th:text="${r.teacherRemark ?: '—'}">Remark</td>
+      </tr>
+      <tr th:if="${#lists.isEmpty(results)}"><td colspan="8">No subject results yet.</td></tr>
+    </tbody>
+  </table>
+
+  <table class="summary" th:if="${reportCard != null}">
+    <tr><td class="label">Total Score</td><td th:text="${reportCard.overallTotal}">0</td>
+        <td class="label">Number of Subjects</td><td th:text="${reportCard.numberOfSubjects}">0</td></tr>
+    <tr><td class="label">Average</td><td th:text="${reportCard.overallAverage}">0</td>
+        <td class="label">Overall Grade</td><td th:class="'grade-' + ${reportCard.overallGrade}" th:text="${reportCard.overallGrade}">A</td></tr>
+    <tr><td class="label">Position in Class</td><td th:text="${reportCard.overallPosition}">1</td>
+        <td class="label">Attendance</td><td th:text="${reportCard.attendancePercent} + '%'">0%</td></tr>
+  </table>
+
+  <div class="remarks" th:if="${reportCard != null}">
+    <div class="remark-box">
+      <div class="title">Class Teacher's Remark</div>
+      <div th:text="${reportCard.classTeacherRemark ?: 'No remark yet.'}">Remark</div>
+    </div>
+    <div class="remark-box">
+      <div class="title">Principal's Remark</div>
+      <div th:text="${reportCard.principalRemark ?: 'No remark yet.'}">Remark</div>
+    </div>
+  </div>
+
+  <div th:if="${reportCard == null}" style="margin-top:20px;font-style:italic;color:#94a3b8">
+    This report card has not been fully generated yet — some subject results are still pending.
+  </div>
+
+  <div class="footer">Generated automatically by EduTaskBoard — Automatic Result System</div>
+</body>
+</html>

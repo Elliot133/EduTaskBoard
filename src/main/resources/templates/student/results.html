@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Report Card – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='results'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Report Card</h1><p class="page-sub">Automatically generated once every subject is complete</p></div>
+      <a th:if="${reportCard != null}" th:href="@{/student/results/pdf}" class="btn btn-primary">Download PDF</a>
+    </div>
+
+    <div class="card mb-6" th:if="${reportCard != null}" style="padding:1.2rem 1.4rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;font-size:.9rem">
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Total</span><span th:text="${reportCard.overallTotal}">0</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Average</span><span th:text="${reportCard.overallAverage}">0</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Grade</span><span th:class="'grade-' + ${reportCard.overallGrade}" th:text="${reportCard.overallGrade}">A</span></div>
+        <div><span class="muted" style="font-size:.72rem;display:block;font-weight:700;text-transform:uppercase">Position</span><span th:text="'#' + ${reportCard.overallPosition}">#1</span></div>
+      </div>
+    </div>
+    <div class="card mb-6" th:if="${reportCard == null}"><div class="empty-st">Your report card isn't ready yet — some subjects are still being marked.</div></div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Highest</th><th>Grade</th><th>Position</th><th>Teacher Remark</th></tr></thead>
+          <tbody>
+            <tr th:each="r : ${results}">
+              <td th:text="${r.subject.name}">Subject</td>
+              <td th:text="${r.ca1}">0</td>
+              <td th:text="${r.ca2}">0</td>
+              <td th:text="${r.exam}">0</td>
+              <td th:text="${r.total}">0</td>
+              <td th:text="${r.highest}">0</td>
+              <td th:class="'grade-' + ${r.grade}" th:text="${r.grade}">A</td>
+              <td th:text="'#' + ${r.subjectPosition}">#1</td>
+              <td th:text="${r.teacherRemark ?: '—'}">Remark</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(results)}"><td colspan="9" class="erow">No results yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mb-6" th:if="${reportCard != null}" style="padding:1.2rem 1.4rem;margin-top:1.2rem">
+      <p><strong>Class Teacher's Remark:</strong> <span th:text="${reportCard.classTeacherRemark ?: 'No remark yet.'}"></span></p>
+      <p style="margin-top:.5rem"><strong>Principal's Remark:</strong> <span th:text="${reportCard.principalRemark ?: 'No remark yet.'}"></span></p>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Timetable – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='timetable'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Timetable Management</h1><p class="page-sub">Every period is 30 minutes; breaks and free periods are calculated automatically</p></div>
+      <div style="display:flex;gap:.5rem">
+        <a th:href="@{/admin/substitutes}" class="btn btn-outline">Substitute Teachers</a>
+        <a th:href="@{/admin/leave}" class="btn btn-outline">Leave Requests</a>
+      </div>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert a-error">⚠ <span th:text="${error}"></span></div>
+
+    <div class="card" style="padding:1rem 1.4rem;margin-bottom:1.2rem">
+      <form action="/admin/timetable/settings" method="post" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="fg" style="margin:0">
+          <label class="fl">School Daily Start Time</label>
+          <input type="time" name="startTime" class="fi" th:value="${settings.dailyStartTime}" required/>
+        </div>
+        <button type="submit" class="btn btn-primary">Update — recalculates every timetable instantly</button>
+      </form>
+    </div>
+
+    <div class="card" style="padding:1rem 1.4rem;margin-bottom:1.2rem">
+      <form method="get" action="/admin/timetable" style="display:flex;gap:1rem;align-items:center">
+        <label class="fl" style="margin:0">Class:</label>
+        <select name="classId" class="fi" style="max-width:260px" onchange="this.form.submit()">
+          <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name}"
+                  th:selected="${selectedClass!= null and selectedClass.id == c.id}">Class</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="card" th:if="${selectedClass!= null}" style="padding:1.2rem;overflow-x:auto">
+      <h2 class="card-title" th:text="${selectedClass.name} + ' — Weekly Timetable'" style="margin-bottom:1rem">Timetable</h2>
+      <div class="tt-grid">
+        <div></div>
+        <div class="tt-head" th:each="d : ${days}" th:text="${d}">Day</div>
+
+        <th:block th:each="idx : ${#numbers.sequence(0, 6)}">
+          <div class="tt-time"
+               th:with="row0=${schedule.get(days[0]).get(idx)}"
+               th:text="${row0.startTime} + '–' + ${row0.endTime}">Time</div>
+
+          <th:block th:if="${schedule.get(days[0]).get(idx).rowType.name() == 'PERIOD'}">
+            <div th:each="d : ${days}" th:with="row=${schedule.get(d).get(idx)}"
+                 th:class="${'tt-cell ' + (row.freePeriod? 'free' : 'subject') + (row.substituted? ' substituted' : '')}"
+                 draggable="true" th:attr="data-slotid=${row.slotId},data-day=${d},data-period=${row.periodNumber}"
+                 ondragstart="ttDragStart(event)" ondragover="event.preventDefault()" ondrop="ttDrop(event)"
+                 onclick="openSlotEditor(this)">
+              <span th:if="${row.freePeriod}">Free Period</span>
+              <span th:unless="${row.freePeriod}">
+                <div class="tt-subject-name" th:text="${row.subjectName}">Subject</div>
+                <div class="tt-teacher-name" th:text="${row.teacherName}">Teacher</div>
+                <div th:if="${row.substituted}" class="tt-sub-tag" th:text="'Substitute: ' + ${row.substituteTeacherName}">Substitute</div>
+              </span>
+            </div>
+          </th:block>
+          <th:block th:if="${schedule.get(days[0]).get(idx).rowType.name() == 'SHORT_BREAK'}">
+            <div class="tt-cell short-break">☕ Short Break (15 min)</div>
+          </th:block>
+          <th:block th:if="${schedule.get(days[0]).get(idx).rowType.name() == 'LONG_BREAK'}">
+            <div class="tt-cell long-break">🍽 Long Break (30 min)</div>
+          </th:block>
+        </th:block>
+      </div>
+      <p class="muted" style="font-size:.78rem;margin-top:.8rem">Click any period to assign/change its subject &amp; teacher. Drag a lesson onto another period to move or swap it.</p>
+    </div>
+    <div class="empty-st" th:if="${selectedClass == null}">No classes yet — create one first.</div>
+  </main>
+</div>
+
+<!-- Slot editor modal -->
+<div id="slotModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center">
+  <div class="card" style="max-width:380px;width:92%;padding:1.4rem">
+    <h3 style="margin-bottom:1rem">Edit Period</h3>
+    <form id="slotForm" action="/admin/timetable/save" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <input type="hidden" name="classId" th:value="${selectedClass!= null? selectedClass.id : ''}"/>
+      <input type="hidden" id="slotDay" name="day"/>
+      <input type="hidden" id="slotPeriod" name="periodNumber"/>
+      <div class="fg">
+        <label class="fl">Subject</label>
+        <select name="subjectId" id="slotSubject" class="fi">
+          <option value="">— Free Period —</option>
+          <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}">Subject</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Teacher</label>
+        <select name="teacherId" id="slotTeacher" class="fi">
+          <option value="">— None —</option>
+          <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}">Teacher</option>
+        </select>
+      </div>
+      <div class="faction">
+        <button type="button" class="btn btn-outline" onclick="closeSlotEditor()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script th:src="@{/js/notifications.js}"></script>
+<script>
+  function openSlotEditor(cell) {
+    document.getElementById('slotDay').value = cell.dataset.day;
+    document.getElementById('slotPeriod').value = cell.dataset.period;
+    document.getElementById('slotSubject').value = '';
+    document.getElementById('slotTeacher').value = '';
+    document.getElementById('slotModal').style.display = 'flex';
+  }
+  function closeSlotEditor() { document.getElementById('slotModal').style.display = 'none'; }
+
+  let dragSlotId = null;
+  function ttDragStart(e) { dragSlotId = e.currentTarget.dataset.slotid; e.stopPropagation(); }
+  function ttDrop(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (!dragSlotId) return;
+    const newDay = e.currentTarget.dataset.day;
+    const newPeriod = e.currentTarget.dataset.period;
+    const params = new URLSearchParams({ slotId: dragSlotId, newDay: newDay, newPeriod: newPeriod });
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    fetch('/admin/timetable/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrfToken },
+      body: params.toString()
+    }).then(() => window.location.reload());
+  }
+
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

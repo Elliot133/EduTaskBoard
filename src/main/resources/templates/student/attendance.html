@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Attendance – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='attendance'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Attendance</h1><p class="page-sub">Your attendance record this term</p></div>
+    </div>
+
+    <div class="card mb-6" style="padding:1.2rem 1.4rem">
+      <div class="progress-label"><span>Attendance Rate</span><span th:text="${percentage} + '%'">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" th:classappend="${percentage < 75 ? 'danger' : (percentage < 90 ? 'warn' : '')}" th:style="'width:' + ${percentage} + '%'"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;font-size:.85rem">
+        <div><span class="att-present" th:text="${summary.get('PRESENT')}">0</span> Present</div>
+        <div><span class="att-absent" th:text="${summary.get('ABSENT')}">0</span> Absent</div>
+        <div><span class="att-late" th:text="${summary.get('LATE')}">0</span> Late</div>
+        <div><span class="att-excused" th:text="${summary.get('EXCUSED')}">0</span> Excused</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
+          <tbody>
+            <tr th:each="r : ${records}">
+              <td th:text="${r.date}">Date</td>
+              <td><span th:class="${'att-' + #strings.toLowerCase(r.status.name())}" th:text="${r.status}">Status</span></td>
+              <td th:text="${r.remarks ?: '—'}">Remarks</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(records)}"><td colspan="3" class="erow">No attendance recorded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

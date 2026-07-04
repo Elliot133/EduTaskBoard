@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>All Tasks – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='tasks'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">All Assignment</h1><p class="page-sub">System-wide assignment overview</p></div>
+    </div>
+    <div class="card">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Title</th><th>Teacher</th><th>Class</th><th>Subject</th><th>Due Date</th><th>Priority</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr th:each="t : ${tasks}">
+              <td th:text="${t.title}">Title</td>
+              <td th:text="${t.teacher != null ? t.teacher.fullName : '—'}">Teacher</td>
+              <td th:text="${t.schoolClass != null ? t.schoolClass.name : '—'}">Class</td>
+              <td th:text="${t.subject ?: '—'}">Subj</td>
+              <td th:text="${t.dueDate}">Date</td>
+              <td><span th:class="${'badge b-' + t.priority.name().toLowerCase()}" th:text="${t.priority}">MED</span></td>
+              <td><span th:class="${'badge b-' + t.status.name().toLowerCase()}" th:text="${t.status}">ACTIVE</span></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(tasks)}"><td colspan="7" class="erow">No tasks found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

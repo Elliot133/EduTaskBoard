@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Substitute Teachers – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='timetable'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Substitute Teacher Management</h1><p class="page-sub">Only teachers on a Free Period (and not on leave) can be selected</p></div>
+      <a th:href="@{/admin/timetable}" class="btn btn-outline">← Timetable</a>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert a-error">⚠ <span th:text="${error}"></span></div>
+
+    <div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.2rem">
+      <h2 class="card-title" style="margin-bottom:1rem">Assign Substitute</h2>
+      <form action="/admin/substitutes/assign" method="post" id="subForm">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="fr">
+          <div class="fg">
+            <label class="fl">Class *</label>
+            <select name="classId" class="fi" required>
+              <option value="">— Select —</option>
+              <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name}">Class</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="fl">Day *</label>
+            <select name="day" id="subDay" class="fi" required>
+              <option th:each="d : ${days}" th:value="${d}" th:text="${d}">Day</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="fl">Period (1-5) *</label>
+            <select name="periodNumber" id="subPeriod" class="fi" required>
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+              <option value="4">4</option><option value="5">5</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr">
+          <div class="fg">
+            <label class="fl">Original Teacher (absent) *</label>
+            <select name="originalTeacherId" id="subOriginal" class="fi" required>
+              <option value="">— Select —</option>
+              <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}">Teacher</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="fl">Start Date *</label>
+            <input type="date" name="startDate" id="subStart" class="fi" required/>
+          </div>
+          <div class="fg">
+            <label class="fl">End Date *</label>
+            <input type="date" name="endDate" class="fi" required/>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Available Substitute Teacher *</label>
+          <select name="substituteTeacherId" id="subReplacement" class="fi" required>
+            <option value="">Select class/day/period/teacher/date above first</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline" style="margin-top:.5rem" onclick="loadAvailable()">Check Availability</button>
+        </div>
+        <div class="fg"><label class="fl">Reason</label><input type="text" name="reason" class="fi" placeholder="e.g. Sick leave"/></div>
+        <button type="submit" class="btn btn-primary">Assign Substitute</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">All Substitute Assignments</h2></div>
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Class</th><th>Day/Period</th><th>Original</th><th>Substitute</th><th>Dates</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${assignments}">
+              <td th:text="${a.schoolClass.name}">Class</td>
+              <td th:text="${a.day} + ' P' + ${a.periodNumber}">Day/P</td>
+              <td th:text="${a.originalTeacher.fullName}">Original</td>
+              <td th:text="${a.substituteTeacher.fullName}">Sub</td>
+              <td th:text="${a.startDate} + ' → ' + ${a.endDate}">Dates</td>
+              <td><span th:class="${a.cancelled ? 'badge b-pending' : 'badge b-active'}" th:text="${a.cancelled ? 'Cancelled' : 'Active'}">Status</span></td>
+              <td>
+                <form th:if="${!a.cancelled}" th:action="@{/admin/substitutes/{id}/cancel(id=${a.id})}" method="post" onsubmit="return confirm('Cancel this substitution?')">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                  <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                </form>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(assignments)}"><td colspan="7" class="erow">No substitute assignments yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function loadAvailable() {
+  const classId = document.querySelector('[name=classId]').value;
+  const day = document.getElementById('subDay').value;
+  const period = document.getElementById('subPeriod').value;
+  const original = document.getElementById('subOriginal').value;
+  const start = document.getElementById('subStart').value;
+  const sel = document.getElementById('subReplacement');
+  if (!classId || !day || !period || !original || !start) {
+    alert('Please fill in class, day, period, original teacher, and start date first.');
+    return;
+  }
+  const params = new URLSearchParams({ classId, day, periodNumber: period, originalTeacherId: original, date: start });
+  fetch('/admin/substitutes/available?' + params.toString())
+    .then(r => r.json())
+    .then(list => {
+      sel.innerHTML = '';
+      if (!list.length) {
+        sel.innerHTML = '<option value="">No Available Teacher</option>';
+        return;
+      }
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        list.map(t => `<option value="${t.id}">${t.fullName}</option>`).join('');
+    });
+}
+
+// Mobile sidebar toggle
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const sidebar = document.querySelector('aside.sidebar');
+
+if (sidebarToggle && sidebar && sidebarOverlay) {
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('show');
+  });
+  
+  sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('show');
+  });
+
+  sidebar.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 860) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+      }
+    });
+  });
+}
+</script>
+</body>
+</html>

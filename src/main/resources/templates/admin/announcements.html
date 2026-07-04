@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Announcements – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='announcements'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Announcements</h1><p class="page-sub">Broadcast messages to the school</p></div>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Post Announcement</h2></div>
+        <div class="fw">
+          <form action="/admin/announcements/save" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="fg"><label class="fl">Title *</label><input type="text" name="title" class="fi" required/></div>
+            <div class="fg"><label class="fl">Content *</label><textarea name="content" class="fi fta" required></textarea></div>
+            <div class="fg">
+              <label class="fl">Audience</label>
+              <select name="audience" class="fi">
+                <option value="ALL">Everyone</option>
+                <option value="TEACHERS">Teachers Only</option>
+                <option value="STUDENTS">Students Only</option>
+              </select>
+            </div>
+            <div class="fg" style="flex-direction:row;align-items:center;gap:.5rem">
+              <input type="checkbox" name="pinned" value="true" id="pinned"/>
+              <label for="pinned" class="fl" style="margin:0;cursor:pointer">Pin this announcement</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Post</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Posted Announcements</h2></div>
+        <div class="ann-list">
+          <div th:each="a : ${announcements}" class="ann-item">
+            <div class="ann-head">
+              <span class="ann-title" th:text="${a.title}">Title</span>
+              <span th:if="${a.pinned}" class="badge b-pinned">📌</span>
+              <span th:class="${'badge b-' + a.audience.name().toLowerCase()}" th:text="${a.audience}">ALL</span>
+            </div>
+            <p class="ann-body" th:text="${a.content}">Content</p>
+            <div class="ann-foot">
+              <span class="ann-meta" th:text="${a.createdAt}">Date</span>
+              <form th:action="@{/admin/announcements/{id}/delete(id=${a.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</button>
+              </form>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(announcements)}" class="empty-st">No announcements yet.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

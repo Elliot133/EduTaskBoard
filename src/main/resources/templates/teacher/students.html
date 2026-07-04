@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Students – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='students'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Students</h1><p class="page-sub">Students enrolled in your classes</p></div>
+    </div>
+
+    <div th:each="cls : ${myClasses}" class="card mb-6">
+      <div class="card-header">
+        <h2 class="card-title" th:text="${cls.name}">Class</h2>
+       <span th:text="${cls.students != null ? cls.students.size() : 0}"></span>
+      </div>
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Student ID</th><th>Full Name</th><th>Username</th><th>Parent</th><th>Parent Phone</th></tr></thead>
+          <tbody>
+            <tr th:each="s : ${cls.students}">
+              <td th:text="${s.studentId ?: '—'}">ID</td>
+              <td th:text="${s.fullName}">Name</td>
+              <td><code th:text="${s.username}">user</code></td>
+              <td th:text="${s.parentName ?: '—'}">Parent</td>
+              <td th:text="${s.parentPhone ?: '—'}">Phone</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(cls.students)}"><td colspan="5" class="erow">No students in this class.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div th:if="${#lists.isEmpty(myClasses)}" class="card">
+      <div class="empty-st"><span class="empty-ic">🏫</span>You have no classes assigned yet.</div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

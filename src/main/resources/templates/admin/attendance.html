@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Attendance – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<!-- Hamburger button - 3 lines -->
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay - darkens screen when sidebar opens -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-admin}" th:with="activePage='attendance'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Attendance Overview</h1><p class="page-sub">School-wide attendance by class</p></div>
+    </div>
+
+    <div class="card" style="padding:1rem 1.4rem;margin-bottom:1.2rem">
+      <form method="get" action="/admin/attendance">
+        <label class="fl">Class</label>
+        <select name="classId" class="fi" style="max-width:260px" onchange="this.form.submit()">
+          <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name}"
+                  th:selected="${selectedClass != null and selectedClass.id == c.id}">Class</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="card" th:if="${selectedClass != null}">
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Student</th><th>Date</th><th>Status</th><th>Marked By</th></tr></thead>
+          <tbody>
+            <tr th:each="r : ${records}">
+              <td th:text="${r.student.fullName}">Student</td>
+              <td th:text="${r.date}">Date</td>
+              <td><span th:class="${'att-' + #strings.toLowerCase(r.status.name())}" th:text="${r.status}">Status</span></td>
+              <td th:text="${r.markedBy != null ? r.markedBy.fullName : '—'}">Teacher</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(records)}"><td colspan="4" class="erow">No attendance recorded for this class yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Timetable – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='timetable'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">My Timetable</h1><p class="page-sub">Your weekly schedule — free periods shown where you're not teaching</p></div>
+      <a th:href="@{/teacher/leave}" class="btn btn-outline">Request Leave</a>
+    </div>
+
+    <div class="card" style="padding:1.2rem;overflow-x:auto">
+      <div class="tt-grid">
+        <div></div>
+        <div class="tt-head" th:each="d : ${schedule.keySet()}" th:text="${d}">Day</div>
+
+        <th:block th:each="idx : ${#numbers.sequence(0, 6)}">
+          <div class="tt-time"
+               th:with="row0=${schedule.values().iterator().next().get(idx)}"
+               th:text="${row0.startTime} + '–' + ${row0.endTime}">Time</div>
+
+          <th:block th:if="${schedule.values().iterator().next().get(idx).rowType.name() == 'PERIOD'}">
+            <div th:each="d : ${schedule.keySet()}" th:with="row=${schedule.get(d).get(idx)}"
+                 th:class="${'tt-cell ' + (row.freePeriod ? 'free' : 'subject')}">
+              <span th:if="${row.freePeriod}">Free Period</span>
+              <span th:unless="${row.freePeriod}">
+                <div class="tt-subject-name" th:text="${row.subjectName}">Subject</div>
+                <div class="tt-teacher-name" th:text="${row.teacherName}">Class</div>
+              </span>
+            </div>
+          </th:block>
+          <th:block th:if="${schedule.values().iterator().next().get(idx).rowType.name() == 'SHORT_BREAK'}">
+            <div class="tt-cell short-break">☕ Short Break</div>
+          </th:block>
+          <th:block th:if="${schedule.values().iterator().next().get(idx).rowType.name() == 'LONG_BREAK'}">
+            <div class="tt-cell long-break">🍽 Long Break</div>
+          </th:block>
+        </th:block>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

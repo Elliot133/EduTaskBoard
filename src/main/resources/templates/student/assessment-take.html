@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title th:text="${attempt.assessment.title} + ' – EduTaskBoard'">Assessment</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <main class="main-content" style="max-width:820px;margin:0 auto">
+    <div class="page-header">
+      <div><h1 class="page-title" th:text="${attempt.assessment.title}">Assessment</h1>
+        <p class="page-sub" th:text="${attempt.assessment.subject.name} + ' · ' + ${attempt.assessment.type}">Subject</p></div>
+      <div id="timer" class="badge b-active" style="font-size:1rem;padding:.5rem 1rem" th:attr="data-seconds=${secondsRemaining}">--:--</div>
+    </div>
+
+    <form id="assessmentForm" th:action="@{/student/assessments/attempts/{id}/submit(id=${attempt.id})}" method="post" onsubmit="return confirm('Submit your assessment? You cannot make changes after submitting.');">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+      <div th:each="q,st : ${questions}" class="card mb-6" style="padding:1.2rem 1.4rem">
+        <div class="cls-meta" style="margin-bottom:.4rem">
+          Q<span th:text="${st.count}"></span> · <span th:text="${q.marks}">0</span> marks
+        </div>
+        <div style="font-weight:600;margin-bottom:.75rem" th:text="${q.questionText}">Question text</div>
+
+        <div th:if="${q.type.name() == 'OBJECTIVE'}" class="obj-options" th:attr="data-qid=${q.id}">
+          <label th:each="opt : ${ {'A','B','C','D'} }" style="display:block;margin-bottom:.5rem;cursor:pointer"
+                 th:if="${(opt == 'A' and q.optionA != null) or (opt == 'B' and q.optionB != null) or (opt == 'C' and q.optionC != null) or (opt == 'D' and q.optionD != null)}">
+            <input type="radio" th:name="'q_' + ${q.id}" th:value="${opt}" class="opt-radio"
+                   th:checked="${answerMap.get(q.id) != null and answerMap.get(q.id).selectedOption != null and answerMap.get(q.id).selectedOption.name() == opt}"/>
+            <span th:text="${opt} + '. ' + (${opt == 'A'} ? ${q.optionA} : (${opt == 'B'} ? ${q.optionB} : (${opt == 'C'} ? ${q.optionC} : ${q.optionD})))">Option</span>
+          </label>
+        </div>
+
+        <div th:if="${q.type.name() == 'THEORY'}">
+          <textarea th:name="'q_' + ${q.id}" class="fi ftal theory-answer" th:attr="data-qid=${q.id}" rows="5"
+                    th:text="${answerMap.get(q.id) != null ? answerMap.get(q.id).answerText : ''}"></textarea>
+        </div>
+      </div>
+
+      <div class="faction">
+        <button type="submit" class="btn btn-primary">Submit Assessment</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script th:inline="javascript">
+const attemptId = /*[[${attempt.id}]]*/ 0;
+const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+/* ── Countdown timer (Module 5) ── */
+let seconds = parseInt(document.getElementById('timer').dataset.seconds, 10);
+function renderTimer() {
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  document.getElementById('timer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+renderTimer();
+const timerInterval = setInterval(() => {
+  seconds--;
+  if (seconds <= 0) {
+    clearInterval(timerInterval);
+    autoSubmit();
+    return;
+  }
+  renderTimer();
+}, 1000);
+
+function autoSubmit() {
+  fetch(`/student/assessments/attempts/${attemptId}/auto-submit`, {
+    method: 'POST',
+    headers: { [csrfHeader]: csrfToken }
+  }).finally(() => {
+    window.location.href = `/student/assessments/attempts/${attemptId}/result`;
+  });
+}
+
+/* ── Autosave (Module 6) ── */
+function autosave(questionId, selectedOption, answerText) {
+  const params = new URLSearchParams();
+  params.set('questionId', questionId);
+  if (selectedOption) params.set('selectedOption', selectedOption);
+  if (answerText !== undefined) params.set('answerText', answerText);
+  fetch(`/student/assessments/attempts/${attemptId}/autosave`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrfToken },
+    body: params.toString()
+  });
+}
+
+document.querySelectorAll('.opt-radio').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    const qid = e.target.closest('.obj-options').dataset.qid;
+    autosave(qid, e.target.value, undefined);
+  });
+});
+
+let saveTimers = {};
+document.querySelectorAll('.theory-answer').forEach(area => {
+  area.addEventListener('input', (e) => {
+    const qid = e.target.dataset.qid;
+    clearTimeout(saveTimers[qid]);
+    saveTimers[qid] = setTimeout(() => autosave(qid, undefined, e.target.value), 1200);
+  });
+});
+</script>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

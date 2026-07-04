@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Announcements – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-student}" th:with="activePage='announcements'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Announcements</h1><p class="page-sub">Latest news from school administration</p></div>
+    </div>
+    <div class="ann-cards">
+      <div th:each="a : ${announcements}" class="card ann-big">
+        <div class="ann-head">
+          <span class="ann-title" th:text="${a.title}">Title</span>
+          <span th:if="${a.pinned}" class="badge b-pinned">📌 Pinned</span>
+        </div>
+        <p class="ann-full" th:text="${a.content}">Content</p>
+        <p class="ann-meta">Posted: <span th:text="${a.createdAt}">Date</span></p>
+      </div>
+      <div th:if="${#lists.isEmpty(announcements)}" class="card">
+        <div class="empty-st"><span class="empty-ic">📢</span>No announcements yet.</div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

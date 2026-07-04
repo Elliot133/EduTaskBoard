@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Learning Materials – EduTaskBoard</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body class="app-body">
+<button id="sidebarToggle" class="hamburger-btn" aria-label="Open menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div class="layout">
+  <div th:replace="~{shared/layout-fragments :: sidebar-teacher}" th:with="activePage='materials'"></div>
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1 class="page-title">Learning Materials</h1><p class="page-sub">Upload PDFs, Word docs, slides, and images for your classes</p></div>
+    </div>
+    <div th:if="${success}" class="alert a-success">✓ <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert a-error">⚠ <span th:text="${error}"></span></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Upload Material</h2></div>
+        <div class="fw">
+          <form action="/teacher/materials/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="fg"><label class="fl">Title *</label><input type="text" name="title" class="fi" placeholder="e.g. Chapter 5 Notes" required/></div>
+            <div class="fg"><label class="fl">Description</label><input type="text" name="description" class="fi" placeholder="Optional"/></div>
+            <div class="fr">
+              <div class="fg">
+                <label class="fl">Class *</label>
+                <select name="classId" class="fi" required>
+                  <option value="">— Select Class —</option>
+                  <option th:each="a : ${assignments}" th:value="${a.schoolClass.id}" th:text="${a.schoolClass.name}">Class</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="fl">Subject</label>
+                <select name="subjectId" class="fi">
+                  <option value="">— None —</option>
+                  <option th:each="a : ${assignments}" th:value="${a.subject.id}" th:text="${a.subject.name}">Subject</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg">
+              <label class="fl">File * (PDF, DOCX, PPTX, or Image)</label>
+              <input type="file" name="file" class="fi" accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.gif,.webp" required/>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Upload</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">My Uploads</h2>
+          <span class="badge b-count" th:text="${#lists.size(materials)}">0</span>
+        </div>
+        <div class="cls-list">
+          <div th:each="m : ${materials}" class="cls-item">
+            <div>
+              <div class="cls-name" th:text="${m.title}">Title</div>
+              <div class="cls-meta">
+                <span th:text="${m.fileType}">PDF</span> ·
+                <span th:text="${m.schoolClass.name}">Class</span> ·
+                <span th:text="${m.subject != null ? m.subject.name : 'General'}">Subject</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:.5rem">
+              <a th:href="@{/materials/{id}/download(id=${m.id})}" class="btn btn-sm btn-outline">Download</a>
+              <form th:action="@{/teacher/materials/{id}/delete(id=${m.id})}" method="post" onsubmit="return confirm('Delete this material?')">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(materials)}" class="empty-st">No materials uploaded yet.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.querySelector('aside.sidebar');
+
+  if (sidebarToggle && sidebar && sidebarOverlay) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    });
+
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 860) {
+          sidebar.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>
