@@ -23,6 +23,7 @@ public class AuthController {
                             Model model) {
         if (error  != null) model.addAttribute("error",   "Invalid credentials or account pending approval.");
         if (logout != null) model.addAttribute("message", "You have been signed out.");
+        model.addAttribute("classes", classService.getAll());
         return "auth/auth";
     }
 
