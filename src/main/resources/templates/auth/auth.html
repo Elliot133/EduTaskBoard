@@ -271,9 +271,37 @@ footer a:hover { color: var(--yellow); }
                 <label><svg class="form-label-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>I am a…</label>
                 <select id="reg-role" name="role" required><option value="">— Select Role —</option><option value="STUDENT">Student</option><option value="TEACHER">Teacher</option></select>
               </div>
-              <div id="student-fields" class="hidden">
-                <div class="form-group"><label>Class</label><select id="reg-class" name="classId"><option value="">— Select your class —</option><option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.name}">Class</option></select></div>
-              </div>
+             <div id="student-fields" class="hidden">
+
+    <h4 style="color:red;">DEBUG</h4>
+
+    <p>
+        Total Classes:
+        <span th:text="${#lists.size(classes)}">0</span>
+    </p>
+
+    <ul>
+        <li th:each="c : ${classes}">
+            <span th:text="${c.id}"></span> -
+            <span th:text="${c.name}"></span>
+        </li>
+    </ul>
+
+    <div class="form-group">
+        <label>Class</label>
+
+        <select id="reg-class" name="classId">
+            <option value="">— Select your class —</option>
+
+            <option th:each="c : ${classes}"
+                    th:value="${c.id}"
+                    th:text="${c.name}">
+            </option>
+
+        </select>
+    </div>
+
+</div>
               <div id="teacher-fields" class="hidden">
                 <div class="form-group"><label>Subject</label><input type="text" id="reg-subject" name="subject" placeholder="e.g. Mathematics"/></div>
               </div>
