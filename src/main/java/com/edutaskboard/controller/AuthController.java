@@ -28,7 +28,8 @@ public class AuthController {
 
     @GetMapping("/register")
     public String registerPage(Model model) {
-        model.addAttribute("classes", classService.getAll());
+        System.out.println("classes found:" + classService.getAll().size());
+         m.addAttribute("classes", classService.getAll());
         return "auth/auth";
     }
 
